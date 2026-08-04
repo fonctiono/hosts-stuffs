@@ -78,8 +78,6 @@ local library = {
     open = false;
     opening = false;
     hasInit = false;
-    cheatname = startupArgs.cheatname or 'octohook';
-    gamename = startupArgs.gamename or 'universal';
     fileext = startupArgs.fileext or '.txt';
 }
 
@@ -613,11 +611,6 @@ function library:init()
 
     local tooltipObjects = {};
 
-    makefolder(self.cheatname)
-    makefolder(self.cheatname..'/assets')
-    makefolder(self.cheatname..'/'..self.gamename)
-    makefolder(self.cheatname..'/'..self.gamename..'/configs');
-
     function self:SetTheme(theme)
         for i,v in next, theme do
             self.theme[i] = v;
@@ -626,9 +619,6 @@ function library:init()
     end
 
     function self:GetConfig(name)
-        if isfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext) then
-            return readfile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext);
-        end
     end
 
     function self:LoadConfig(name)
@@ -697,7 +687,6 @@ function library:init()
                     cfg[flag] = option.input
                 end
             end
-            writefile(self.cheatname..'/'..self.gamename..'/configs/'..name..self.fileext, http:JSONEncode(cfg));
         end)
 
         if s then
@@ -705,13 +694,6 @@ function library:init()
         else
             self:SendNotification('Error saving config: '..tostring(e)..'. ('..tostring(name)..')', 5, c3new(1,0,0));
         end
-    end
-
-    for i,v in next, self.images do
-        if not isfile(self.cheatname..'/assets/'..i..'.oh') then
-            writefile(self.cheatname..'/assets/'..i..'.oh', game:HttpGet(v))
-        end
-        self.images[i] = readfile(self.cheatname..'/assets/'..i..'.oh');
     end
 
     self.cursor1 = utility:Draw('Triangle', {Filled = true, Color = fromrgb(255,255,255), ZIndex = self.zindexOrder.cursor});
@@ -4585,9 +4567,7 @@ function library:init()
         self.watermark = {
             objects = {};
             text = {
-                {self.cheatname, true},
                 {("%s (uid %s)"):format(IonHub_User.User, tostring(IonHub_User.UID)), true},
-                {self.gamename, true},
                 {'0 fps', true},
                 {'0ms', true},
                 {'00:00:00', true},
@@ -4723,13 +4703,6 @@ function library:CreateSettingsTab(menu)
     configSection:AddList({text = 'Config', flag = 'selectedconfig'})
 
     local function refreshConfigs()
-        library.options.selectedconfig:ClearValues();
-        for _,v in next, listfiles(self.cheatname..'/'..self.gamename..'/configs') do
-            local ext = '.'..v:split('.')[#v:split('.')];
-            if ext == self.fileext then
-                library.options.selectedconfig:AddValue(v:split('\\')[#v:split('\\')]:sub(1,-#ext-1))
-            end
-        end
     end
 
     configSection:AddButton({text = 'Load', confirm = true, callback = function()
@@ -4743,13 +4716,7 @@ function library:CreateSettingsTab(menu)
             library:SendNotification('Config \''..library.flags.configinput..'\' already exists.', 5, c3new(1,0,0));
             return
         end
-        writefile(self.cheatname..'/'..self.gamename..'/configs/'..library.flags.configinput.. self.fileext, http:JSONEncode({}));
-        refreshConfigs()
     end}):AddButton({text = 'Delete', confirm = true, callback = function()
-        if library:GetConfig(library.flags.selectedconfig) then
-            delfile(self.cheatname..'/'..self.gamename..'/configs/'..library.flags.selectedconfig.. self.fileext);
-            refreshConfigs()
-        end
     end})
 
     refreshConfigs()
@@ -4788,7 +4755,6 @@ function library:CreateSettingsTab(menu)
             })
         })
         if res.Success then
-            library:SendNotification(library.cheatname..' | joined discord', 3);
         end
     end})
     
